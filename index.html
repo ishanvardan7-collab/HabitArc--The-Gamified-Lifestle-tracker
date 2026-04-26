@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HabitArc Pro</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #0f172a, #312e81);
+  color: white;
+  text-align: center;
+}
+
+.container {
+  max-width: 600px;
+  margin: auto;
+  padding: 20px;
+}
+
+.glass {
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 15px;
+  margin-top: 15px;
+}
+
+input {
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  width: 70%;
+}
+
+button {
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  background: #7c3aed;
+  color: white;
+  cursor: pointer;
+}
+
+.habit {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.done {
+  text-decoration: line-through;
+  color: lightgreen;
+}
+
+.progress-bar {
+  height: 10px;
+  background: #1e293b;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  background: #22c55e;
+  width: 0%;
+}
+
+.heatmap {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.cell {
+  width: 100%;
+  padding-top: 100%;
+  border-radius: 4px;
+  background: #1e293b;
+}
+
+.level {
+  font-size: 18px;
+  margin-top: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🔥 HabitArc Pro</h1>
+
+<div class="glass">
+  <input id="habitInput" placeholder="Enter habit">
+  <button onclick="addHabit()">Add</button>
+</div>
+
+<div id="habitList" class="glass"></div>
+
+<div class="glass">
+  <p>Progress</p>
+  <div class="progress-bar">
+    <div id="fill" class="fill"></div>
+  </div>
+</div>
+
+<div class="glass">
+  🔥 Streak: <span id="streak">0</span> days
+</div>
+
+<div class="glass">
+  🎮 XP: <span id="xp">0</span> | Level: <span id="level">1</span>
+</div>
+
+<div class="glass">
+  <p>📊 Last 30 Days Activity</p>
+  <div id="heatmap" class="heatmap"></div>
+</div>
+
+</div>
+
+<script>
+let habits = JSON.parse(localStorage.getItem("habits")) || [];
+let streak = parseInt(localStorage.getItem("streak")) || 0;
+let lastDate = localStorage.getItem("lastDate") || null;
+let xp = parseInt(localStorage.getItem("xp")) || 0;
+
+function save() {
+  localStorage.setItem("habits", JSON.stringify(habits));
+  localStorage.setItem("streak", streak);
+  localStorage.setItem("lastDate", lastDate);
+  localStorage.setItem("xp", xp);
+}
+
+function addHabit() {
+  let input = document.getElementById("habitInput");
+  if (!input.value) return;
+
+  habits.push({ name: input.value, done: false });
+  input.value = "";
+  save();
+  render();
+}
+
+function toggleHabit(i) {
+  habits[i].done = !habits[i].done;
+
+  if (habits[i].done) {
+    xp += 10;
+    alert("🎉 +10 XP!");
+  }
+
+  checkStreak();
+  save();
+  render();
+}
+
+function render() {
+  let list = document.getElementById("habitList");
+  list.innerHTML = "";
+
+  habits.forEach((h, i) => {
+    list.innerHTML += `
+      <div class="habit">
+        <span class="${h.done ? "done" : ""}" onclick="toggleHabit(${i})">
+          ${h.name}
+        </span>
+      </div>
+    `;
+  });
+
+  updateProgress();
+  updateXP();
+  renderHeatmap();
+}
+
+function updateProgress() {
+  let done = habits.filter(h => h.done).length;
+  let total = habits.length;
+  let percent = total ? (done / total) * 100 : 0;
+  document.getElementById("fill").style.width = percent + "%";
+}
+
+function checkStreak() {
+  let today = new Date().toDateString();
+
+  if (lastDate === today) return;
+
+  if (lastDate) {
+    let y = new Date();
+    y.setDate(y.getDate() - 1);
+
+    if (new Date(lastDate).toDateString() === y.toDateString()) {
+      streak++;
+    } else {
+      streak = 1;
+    }
+  } else {
+    streak = 1;
+  }
+
+  lastDate = today;
+}
+
+function updateXP() {
+  document.getElementById("xp").innerText = xp;
+  document.getElementById("level").innerText = Math.floor(xp / 100) + 1;
+  document.getElementById("streak").innerText = streak;
+}
+
+function renderHeatmap() {
+  let container = document.getElementById("heatmap");
+  container.innerHTML = "";
+
+  let data = JSON.parse(localStorage.getItem("activity")) || {};
+
+  for (let i = 0; i < 30; i++) {
+    let d = new Date();
+    d.setDate(d.getDate() - i);
+    let key = d.toDateString();
+
+    let val = data[key] || 0;
+
+    let cell = document.createElement("div");
+    cell.className = "cell";
+    cell.style.background = val ? "#22c55e" : "#1e293b";
+
+    container.appendChild(cell);
+  }
+}
+
+function updateActivity() {
+  let today = new Date().toDateString();
+  let data = JSON.parse(localStorage.getItem("activity")) || {};
+
+  let completed = habits.filter(h => h.done).length;
+  data[today] = completed;
+
+  localStorage.setItem("activity", JSON.stringify(data));
+}
+
+setInterval(updateActivity, 5000);
+
+render();
+updateXP();
+</script>
+
+</body>
+</html>
