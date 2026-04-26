@@ -1,6 +1,6 @@
 # HabitArc--The-Gamified-Lifestle-tracker
 
-# 🔗 Live Demo: https://ishanvardan7-collab.github.io/HabitArc--The-Gamified-Lifestyle-tracker/
+# 🔗 Live Demo: https://ishanvardan7-collab.github.io/HabitArc--The-Gamified-Lifestle-tracker/
 
 
 HabitArc is a modern, gamified habit-tracking web application designed to solve the “Consistency Crisis”. Unlike traditional habit trackers that feel like repetitive chores, HabitArc transforms daily routines into an engaging and rewarding experience through visual feedback, gamification, and intuitive design.
